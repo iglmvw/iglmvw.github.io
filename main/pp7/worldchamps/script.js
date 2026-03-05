@@ -18947,7 +18947,7 @@ const uE = `<canvas id="fullLayer" class="sketchpad fullLayer" width='480' heigh
                 height: 300
             },
             actions: !1,
-            colors: ["#3c6e6f", "#007727", "#b8aa01", "#0350a0", "#000000", "#966401", "#48019d", "#730075", "#9c0e3e"],
+            colors: ["#3c6e6f", "#007727", "#b8aa01", "#0350a0", "#000000", "#966401", "#48019d", "#730075", "#9c0e3e", "#d89369", "#888888", "#ffe582"],
             background: "",
             thicknesses: [3, 6],
             defaultIndex: 4,
@@ -23696,8 +23696,14 @@ const p1 = xt.View.extend({
                 hex: "#13ffdb"
             }, {
                 hex: "#00ff97"
-            }, {
+			}, {
                 hex: "#d7ff13"
+			}, {
+                hex: "#d89369"
+            }, {
+                hex: "#888888"
+            }, {
+                hex: "#ffe582"
             }],
             thicknesses: [2, 4],
             defaultIndex: 4,
