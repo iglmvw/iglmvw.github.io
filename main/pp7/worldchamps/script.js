@@ -23861,8 +23861,21 @@ const p1 = xt.View.extend({
             this.showChildView("toolbar", this.toolbarComponent), Qi.prototype.onRender.apply(this)
         },
         onChildviewSketchpadReady() {
-            Qi.prototype.onChildviewSketchpadReady.apply(this), this.onChildviewChooseMarker()
-        },
+			Qi.prototype.onChildviewSketchpadReady.apply(this);
+
+			// patch sketchpad color setter so everything becomes hex
+			const palette = this.model.get("colors").map(c => c.hex);
+			const originalSetColor = this.sketchpadComponent.setColor.bind(this.sketchpadComponent);
+
+			this.sketchpadComponent.setColor = (color) => {
+				if (typeof color === "number") {
+					color = palette[color] || "#000000";
+				}
+				originalSetColor(color);
+			};
+
+			this.onChildviewChooseMarker();
+		},
         onChildviewChooseMarker() {
             this.sketchpadComponent.setHighlighter(!1), this.toolbarComponent.model.set("highlighter", !1);
             const t = this.model.get("thicknesses")[0] || 2;
