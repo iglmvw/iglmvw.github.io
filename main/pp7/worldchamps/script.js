@@ -23972,15 +23972,27 @@ const p1 = xt.View.extend({
                 this.model.get("textKey") && (n.textKey = this.model.get("textKey"), n.val = i), this.triggerMethod("client:message", n)
             })
         },
-        chooseColor(t) {
-            // convert palette index -> hex
-			if (typeof t === "number") {
-				t = this.paletteHex[t] || "#000000";
+        chooseColor(color) {
+			const palette = this.model.get("colors").map(c => c.hex);
+
+			// palette index
+			if (typeof color === "number") {
+				color = palette[color] || "#000000";
 			}
 
-			this.sketchpadComponent.setColor(t);
-			this.toolbarComponent.model.set("currentColor", t);
-        },
+			// palette object
+			if (typeof color === "object" && color && color.hex) {
+				color = color.hex;
+			}
+
+			// invalid fallback
+			if (typeof color !== "string") {
+				color = "#000000";
+			}
+
+			this.sketchpadComponent.setColor(color);
+			this.toolbarComponent.model.set("currentColor", color);
+		},
 		onChildviewChooseColor(color) {
 			this.chooseColor(color);
 		},
