@@ -23947,9 +23947,8 @@ const p1 = xt.View.extend({
             })
         },
         chooseColor(t) {
-			this.sketchpadComponent.setColor(t),
-			this.toolbarComponent.model.set("currentColor", t)
-		},
+            this.sketchpadComponent.setColor(t), this.toolbarComponent.model.set("currentColor", t)
+        },
 		onChildviewChooseColor(childView, color) {
 			this.chooseColor(color);
 		},
@@ -23957,49 +23956,24 @@ const p1 = xt.View.extend({
             this.nameCharacter()
         },
         onChildviewButtonSubmit() {
-			let t = this.sketchpadComponent.getLines();
-
+            let t = this.sketchpadComponent.getLines();
 			const palette = this.model.get("colors").map(c => c.hex);
-			let hasPaletteColor = false;
-
+			
 			for (let line of t) {
-				if (palette.includes(line.color)) {
-					hasPaletteColor = true;
-					break;
+				if (typeof line.color === "number") {
+					line.color = palette[line.color] || "#000000";
 				}
 			}
-
-			// inject invisible palette line if needed
-			if (!hasPaletteColor) {
-				t.push({
-					color: palette[this.model.get("defaultIndex") || 4],
-					thickness: 1,
-					points: [{x:0,y:0},{x:0,y:0}]
-				});
-			}
-
-			if (t.length === 0 && !this.model.get("allowEmpty")) {
-				kt.show(Error(this.model.get("strings").drawing_empty"));
-				return false;
-			}
-
-			const e = {
-				lines: t,
-				action: "submit"
-			};
-
-			if (this.model.get("objectKey")) {
-				e.objectKey = this.model.get("objectKey");
-				e.val = {
-					lines: t,
-					submit: true
-				};
-			}
-
-			this.triggerMethod("client:message", e);
-
-			return false;
-		},
+            if (t.length === 0 && !this.model.get("allowEmpty")) return kt.show(Error(this.model.get("strings").drawing_empty)), !1;
+            const e = {
+                lines: t,
+                action: "submit"
+            };
+            return this.model.get("objectKey") && (e.objectKey = this.model.get("objectKey"), e.val = {
+                lines: t,
+                submit: !0
+            }), this.triggerMethod("client:message", e), !1
+        },
         onTextFilterError(t) {
             const e = this.model.get("strings").ERROR_REJECTED_TEXT || t.message;
             kt.show("error", {
