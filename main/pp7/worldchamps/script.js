@@ -23764,7 +23764,7 @@ const p1 = xt.View.extend({
         },
 		onTrueColorChange(e) {
 			const color = e.target.value;
-			this.triggerMethod("choose:color", color);
+			this.trigger("choose:color", color);
 		},
         triggers: Ue.extend({}, Bo.prototype.triggers, {
             "click #chooseMarkerButton": "choose:marker",
@@ -23949,21 +23949,23 @@ const p1 = xt.View.extend({
             })
         },
         chooseColor(t) {
-
-			// Default palette (index)
+			// palette index
 			if (typeof t === "number") {
-				this.sketchpadComponent.setColor(t);
-				this.toolbarComponent.model.set("currentColor", this.paletteHex[t]);
+
+				const hex = this.paletteHex[t] || "#000000";
+
+				this.sketchpadComponent.setColor(hex);
+				this.toolbarComponent.model.set("currentColor", hex);
+
 				return;
 			}
 
-			// Custom hex color (color wheel)
+			// custom color
 			if (typeof t === "string") {
 
-				// inject custom color into sketchpad directly
-				this.sketchpadComponent.color = t;
-
+				this.sketchpadComponent.setColor(t);
 				this.toolbarComponent.model.set("currentColor", t);
+
 			}
 		},
 		onChildviewChooseColor(color) {
@@ -23973,24 +23975,25 @@ const p1 = xt.View.extend({
             this.nameCharacter()
         },
         onChildviewButtonSubmit() {
-            let t = this.sketchpadComponent.getLines();
-			const palette = this.model.get("colors").map(c => c.hex);
-			
-			for (let line of t) {
-				if (typeof line.color === "number") {
-					line.color = palette[line.color] || "#000000";
-				}
+			let t = this.sketchpadComponent.getLines();
+
+			if (t.length === 0 && !this.model.get("allowEmpty"))
+				return kt.show(Error(this.model.get("strings").drawing_empty)), !1;
+
+			const e = {
+				lines: t,
+				action: "submit"
+			};
+
+			if (this.model.get("objectKey")) {
+				e.objectKey = this.model.get("objectKey");
+				e.val = { lines: t, submit: !0 };
 			}
-            if (t.length === 0 && !this.model.get("allowEmpty")) return kt.show(Error(this.model.get("strings").drawing_empty)), !1;
-            const e = {
-                lines: t,
-                action: "submit"
-            };
-            return this.model.get("objectKey") && (e.objectKey = this.model.get("objectKey"), e.val = {
-                lines: t,
-                submit: !0
-            }), this.triggerMethod("client:message", e), !1
-        },
+
+			this.triggerMethod("client:message", e);
+
+			return !1;
+		},
         onTextFilterError(t) {
             const e = this.model.get("strings").ERROR_REJECTED_TEXT || t.message;
             kt.show("error", {
