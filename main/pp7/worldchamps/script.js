@@ -23947,14 +23947,8 @@ const p1 = xt.View.extend({
             })
         },
         chooseColor(t) {
-
-			if (typeof t === "number") {
-				const palette = this.model.get("colors");
-				t = palette[t] ? palette[t].hex : "#000000";
-			}
-
-			this.sketchpadComponent.setColor(t);
-			this.toolbarComponent.model.set("currentColor", t);
+			this.sketchpadComponent.setColor(t),
+			this.toolbarComponent.model.set("currentColor", t)
 		},
 		onChildviewChooseColor(childView, color) {
 			this.chooseColor(color);
@@ -23965,41 +23959,24 @@ const p1 = xt.View.extend({
         onChildviewButtonSubmit() {
 
 			let t = this.sketchpadComponent.getLines();
+
 			const palette = this.model.get("colors").map(c => c.hex);
-
-			function nearestPaletteIndex(hex) {
-
-				hex = hex.replace("#","");
-				const rgb = hex.match(/../g).map(x => parseInt(x,16));
-
-				let best = 0;
-				let bestDist = Infinity;
-
-				palette.forEach((p,i)=>{
-
-					const prgb = p.replace("#","").match(/../g).map(x => parseInt(x,16));
-
-					const d =
-						(rgb[0]-prgb[0])**2 +
-						(rgb[1]-prgb[1])**2 +
-						(rgb[2]-prgb[2])**2;
-
-					if (d < bestDist) {
-						bestDist = d;
-						best = i;
-					}
-
-				});
-
-				return best;
-			}
+			let hasPaletteColor = false;
 
 			for (let line of t) {
-
-				if (typeof line.color === "string") {
-					line.color = nearestPaletteIndex(line.color);
+				if (palette.includes(line.color)) {
+					hasPaletteColor = true;
+					break;
 				}
+			}
 
+			// If no palette color was used, inject a tiny invisible palette line
+			if (!hasPaletteColor) {
+				t.push({
+					color: palette[this.model.get("defaultIndex") || 4],
+					thickness: 1,
+					points: [{x:0,y:0},{x:0,y:0}]
+				});
 			}
 
 			if (t.length === 0 && !this.model.get("allowEmpty"))
