@@ -23957,7 +23957,6 @@ const p1 = xt.View.extend({
             this.nameCharacter()
         },
         onChildviewButtonSubmit() {
-
 			let t = this.sketchpadComponent.getLines();
 
 			const palette = this.model.get("colors").map(c => c.hex);
@@ -23970,7 +23969,7 @@ const p1 = xt.View.extend({
 				}
 			}
 
-			// If no palette color was used, inject a tiny invisible palette line
+			// inject invisible palette line if needed
 			if (!hasPaletteColor) {
 				t.push({
 					color: palette[this.model.get("defaultIndex") || 4],
@@ -23979,8 +23978,10 @@ const p1 = xt.View.extend({
 				});
 			}
 
-			if (t.length === 0 && !this.model.get("allowEmpty"))
-				return kt.show(Error(this.model.get("strings").drawing_empty")), !1;
+			if (t.length === 0 && !this.model.get("allowEmpty")) {
+				kt.show(Error(this.model.get("strings").drawing_empty"));
+				return false;
+			}
 
 			const e = {
 				lines: t,
@@ -23989,12 +23990,15 @@ const p1 = xt.View.extend({
 
 			if (this.model.get("objectKey")) {
 				e.objectKey = this.model.get("objectKey");
-				e.val = { lines: t, submit: !0 };
+				e.val = {
+					lines: t,
+					submit: true
+				};
 			}
 
 			this.triggerMethod("client:message", e);
 
-			return !1;
+			return false;
 		},
         onTextFilterError(t) {
             const e = this.model.get("strings").ERROR_REJECTED_TEXT || t.message;
