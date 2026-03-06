@@ -23863,14 +23863,26 @@ const p1 = xt.View.extend({
         onChildviewSketchpadReady() {
 			Qi.prototype.onChildviewSketchpadReady.apply(this);
 
-			// patch sketchpad color setter so everything becomes hex
 			const palette = this.model.get("colors").map(c => c.hex);
 			const originalSetColor = this.sketchpadComponent.setColor.bind(this.sketchpadComponent);
 
 			this.sketchpadComponent.setColor = (color) => {
+
+				// palette index
 				if (typeof color === "number") {
 					color = palette[color] || "#000000";
 				}
+
+				// palette object
+				if (typeof color === "object" && color && color.hex) {
+					color = color.hex;
+				}
+
+				// fallback safety
+				if (typeof color !== "string") {
+					color = "#000000";
+				}
+
 				originalSetColor(color);
 			};
 
