@@ -23764,7 +23764,7 @@ const p1 = xt.View.extend({
         },
 		onTrueColorChange(e) {
 			const color = e.target.value;
-			this.trigger("choose:color", color);
+			this.triggerMethod("choose:color", color);
 		},
         triggers: Ue.extend({}, Bo.prototype.triggers, {
             "click #chooseMarkerButton": "choose:marker",
@@ -23832,8 +23832,6 @@ const p1 = xt.View.extend({
             this.toolbarComponent = this.toolbarComponent || new v1({
                 model: new Je.Model({})
             }), Qi.prototype.initialize.apply(this, [t])
-			// build a palette lookup table
-			this.paletteHex = this.model.get("colors").map(c => c.hex);
         },
         update() {
             this.model.get("showChampion") && this.onShowChampion();
@@ -23861,9 +23859,8 @@ const p1 = xt.View.extend({
             this.showChildView("toolbar", this.toolbarComponent), Qi.prototype.onRender.apply(this)
         },
         onChildviewSketchpadReady() {
-			Qi.prototype.onChildviewSketchpadReady.apply(this);
-			this.onChildviewChooseMarker();
-		},
+            Qi.prototype.onChildviewSketchpadReady.apply(this), this.onChildviewChooseMarker()
+        },
         onChildviewChooseMarker() {
             this.sketchpadComponent.setHighlighter(!1), this.toolbarComponent.model.set("highlighter", !1);
             const t = this.model.get("thicknesses")[0] || 2;
@@ -23949,25 +23946,8 @@ const p1 = xt.View.extend({
             })
         },
         chooseColor(t) {
-			// palette index
-			if (typeof t === "number") {
-
-				const hex = this.paletteHex[t] || "#000000";
-
-				this.sketchpadComponent.setColor(hex);
-				this.toolbarComponent.model.set("currentColor", hex);
-
-				return;
-			}
-
-			// custom color
-			if (typeof t === "string") {
-
-				this.sketchpadComponent.setColor(t);
-				this.toolbarComponent.model.set("currentColor", t);
-
-			}
-		},
+            this.sketchpadComponent.setColor(t), this.toolbarComponent.model.set("currentColor", t)
+        },
 		onChildviewChooseColor(color) {
 			this.chooseColor(color);
 		},
@@ -23975,25 +23955,24 @@ const p1 = xt.View.extend({
             this.nameCharacter()
         },
         onChildviewButtonSubmit() {
-			let t = this.sketchpadComponent.getLines();
-
-			if (t.length === 0 && !this.model.get("allowEmpty"))
-				return kt.show(Error(this.model.get("strings").drawing_empty)), !1;
-
-			const e = {
-				lines: t,
-				action: "submit"
-			};
-
-			if (this.model.get("objectKey")) {
-				e.objectKey = this.model.get("objectKey");
-				e.val = { lines: t, submit: !0 };
+            let t = this.sketchpadComponent.getLines();
+			const palette = this.model.get("colors").map(c => c.hex);
+			
+			for (let line of t) {
+				if (typeof line.color === "number") {
+					line.color = palette[line.color] || "#000000";
+				}
 			}
-
-			this.triggerMethod("client:message", e);
-
-			return !1;
-		},
+            if (t.length === 0 && !this.model.get("allowEmpty")) return kt.show(Error(this.model.get("strings").drawing_empty)), !1;
+            const e = {
+                lines: t,
+                action: "submit"
+            };
+            return this.model.get("objectKey") && (e.objectKey = this.model.get("objectKey"), e.val = {
+                lines: t,
+                submit: !0
+            }), this.triggerMethod("client:message", e), !1
+        },
         onTextFilterError(t) {
             const e = this.model.get("strings").ERROR_REJECTED_TEXT || t.message;
             kt.show("error", {
