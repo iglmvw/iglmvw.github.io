@@ -23832,6 +23832,8 @@ const p1 = xt.View.extend({
             this.toolbarComponent = this.toolbarComponent || new v1({
                 model: new Je.Model({})
             }), Qi.prototype.initialize.apply(this, [t])
+			// build a palette lookup table
+			this.paletteHex = this.model.get("colors").map(c => c.hex);
         },
         update() {
             this.model.get("showChampion") && this.onShowChampion();
@@ -23946,7 +23948,13 @@ const p1 = xt.View.extend({
             })
         },
         chooseColor(t) {
-            this.sketchpadComponent.setColor(t), this.toolbarComponent.model.set("currentColor", t)
+            // convert palette index -> hex
+			if (typeof t === "number") {
+				t = this.paletteHex[t] || "#000000";
+			}
+
+			this.sketchpadComponent.setColor(t);
+			this.toolbarComponent.model.set("currentColor", t);
         },
 		onChildviewChooseColor(color) {
 			this.chooseColor(color);
