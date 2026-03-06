@@ -23817,9 +23817,8 @@ const p1 = xt.View.extend({
     y1 = Qi.extend({
         model: new m1,
         events: Ue.extend({}, Qi.prototype.events, {
-			"click #showChampionButton": "onShowChampion",
-			"childview:choose:color": "onChildviewChooseColor"
-		}),
+            "click #showChampionButton": "onShowChampion"
+        }),
         bindings: Ue.extend({}, Qi.prototype.bindings, {
             "#showChampionButton": {
                 observe: "champion",
@@ -23949,7 +23948,7 @@ const p1 = xt.View.extend({
         chooseColor(t) {
             this.sketchpadComponent.setColor(t), this.toolbarComponent.model.set("currentColor", t)
         },
-		onChildviewChooseColor(childView, color) {
+		onChildviewChooseColor(color) {
 			this.chooseColor(color);
 		},
         onChildviewChildviewButtonName() {
