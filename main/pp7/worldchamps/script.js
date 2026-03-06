@@ -23947,8 +23947,15 @@ const p1 = xt.View.extend({
             })
         },
         chooseColor(t) {
-            this.sketchpadComponent.setColor(t), this.toolbarComponent.model.set("currentColor", t)
-        },
+
+			if (typeof t === "number") {
+				const palette = this.model.get("colors");
+				t = palette[t] ? palette[t].hex : "#000000";
+			}
+
+			this.sketchpadComponent.setColor(t);
+			this.toolbarComponent.model.set("currentColor", t);
+		},
 		onChildviewChooseColor(childView, color) {
 			this.chooseColor(color);
 		},
@@ -23956,24 +23963,62 @@ const p1 = xt.View.extend({
             this.nameCharacter()
         },
         onChildviewButtonSubmit() {
-            let t = this.sketchpadComponent.getLines();
+
+			let t = this.sketchpadComponent.getLines();
 			const palette = this.model.get("colors").map(c => c.hex);
-			
-			for (let line of t) {
-				if (typeof line.color === "number") {
-					line.color = palette[line.color] || "#000000";
-				}
+
+			function nearestPaletteIndex(hex) {
+
+				hex = hex.replace("#","");
+				const rgb = hex.match(/../g).map(x => parseInt(x,16));
+
+				let best = 0;
+				let bestDist = Infinity;
+
+				palette.forEach((p,i)=>{
+
+					const prgb = p.replace("#","").match(/../g).map(x => parseInt(x,16));
+
+					const d =
+						(rgb[0]-prgb[0])**2 +
+						(rgb[1]-prgb[1])**2 +
+						(rgb[2]-prgb[2])**2;
+
+					if (d < bestDist) {
+						bestDist = d;
+						best = i;
+					}
+
+				});
+
+				return best;
 			}
-            if (t.length === 0 && !this.model.get("allowEmpty")) return kt.show(Error(this.model.get("strings").drawing_empty)), !1;
-            const e = {
-                lines: t,
-                action: "submit"
-            };
-            return this.model.get("objectKey") && (e.objectKey = this.model.get("objectKey"), e.val = {
-                lines: t,
-                submit: !0
-            }), this.triggerMethod("client:message", e), !1
-        },
+
+			for (let line of t) {
+
+				if (typeof line.color === "string") {
+					line.color = nearestPaletteIndex(line.color);
+				}
+
+			}
+
+			if (t.length === 0 && !this.model.get("allowEmpty"))
+				return kt.show(Error(this.model.get("strings").drawing_empty")), !1;
+
+			const e = {
+				lines: t,
+				action: "submit"
+			};
+
+			if (this.model.get("objectKey")) {
+				e.objectKey = this.model.get("objectKey");
+				e.val = { lines: t, submit: !0 };
+			}
+
+			this.triggerMethod("client:message", e);
+
+			return !1;
+		},
         onTextFilterError(t) {
             const e = this.model.get("strings").ERROR_REJECTED_TEXT || t.message;
             kt.show("error", {
