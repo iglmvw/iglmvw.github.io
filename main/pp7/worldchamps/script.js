@@ -23862,30 +23862,6 @@ const p1 = xt.View.extend({
         },
         onChildviewSketchpadReady() {
 			Qi.prototype.onChildviewSketchpadReady.apply(this);
-
-			const palette = this.model.get("colors").map(c => c.hex);
-			const originalSetColor = this.sketchpadComponent.setColor.bind(this.sketchpadComponent);
-
-			this.sketchpadComponent.setColor = (color) => {
-
-				// palette index
-				if (typeof color === "number") {
-					color = palette[color] || "#000000";
-				}
-
-				// palette object
-				if (typeof color === "object" && color && color.hex) {
-					color = color.hex;
-				}
-
-				// fallback safety
-				if (typeof color !== "string") {
-					color = "#000000";
-				}
-
-				originalSetColor(color);
-			};
-
 			this.onChildviewChooseMarker();
 		},
         onChildviewChooseMarker() {
@@ -23972,26 +23948,23 @@ const p1 = xt.View.extend({
                 this.model.get("textKey") && (n.textKey = this.model.get("textKey"), n.val = i), this.triggerMethod("client:message", n)
             })
         },
-        chooseColor(color) {
-			const palette = this.model.get("colors").map(c => c.hex);
+        chooseColor(t) {
 
-			// palette index
-			if (typeof color === "number") {
-				color = palette[color] || "#000000";
+			// Default palette (index)
+			if (typeof t === "number") {
+				this.sketchpadComponent.setColor(t);
+				this.toolbarComponent.model.set("currentColor", this.paletteHex[t]);
+				return;
 			}
 
-			// palette object
-			if (typeof color === "object" && color && color.hex) {
-				color = color.hex;
-			}
+			// Custom hex color (color wheel)
+			if (typeof t === "string") {
 
-			// invalid fallback
-			if (typeof color !== "string") {
-				color = "#000000";
-			}
+				// inject custom color into sketchpad directly
+				this.sketchpadComponent.color = t;
 
-			this.sketchpadComponent.setColor(color);
-			this.toolbarComponent.model.set("currentColor", color);
+				this.toolbarComponent.model.set("currentColor", t);
+			}
 		},
 		onChildviewChooseColor(color) {
 			this.chooseColor(color);
