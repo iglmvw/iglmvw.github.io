@@ -13992,52 +13992,13 @@ let gx = class extends ex {
         return this.entities[e].lines = i.lines, i
     }
     async strokeDoodle(e, i) {
-        let {
+        const {
             color: n,
             weight: s,
             layer: o,
             points: p,
             brush: y
-        } = i;
-
-        // If a hex color was provided but the server expects a palette index,
-        // map the hex to the doodle entity's allowed palette. If an exact
-        // match isn't found, pick the nearest palette color by RGB distance
-        // and send its index instead.
-        try {
-            if (typeof n === "string" && n.charAt(0) === "#") {
-                const ent = this.entities && this.entities[e];
-                if (ent && Array.isArray(ent.colors) && ent.colors.length) {
-                    const target = n.toLowerCase();
-                    let idx = ent.colors.findIndex(c => c && c.toLowerCase() === target);
-                    if (idx === -1) {
-                        const toRgb = h => {
-                            const s = (h || "").replace("#", "");
-                            const v = parseInt(s, 16) || 0;
-                            return [(v >> 16) & 255, (v >> 8) & 255, v & 255];
-                        };
-                        const trg = toRgb(target);
-                        let best = 0,
-                            bestDist = Infinity;
-                        for (let ii = 0; ii < ent.colors.length; ii++) {
-                            const c = ent.colors[ii];
-                            if (!c) continue;
-                            const rgb = toRgb(c);
-                            const dx = rgb[0] - trg[0], dy = rgb[1] - trg[1], dz = rgb[2] - trg[2];
-                            const dist = dx * dx + dy * dy + dz * dz;
-                            if (dist < bestDist) {
-                                bestDist = dist, best = ii;
-                            }
-                        }
-                        n = best;
-                    } else n = idx;
-                }
-            }
-        } catch (err) {
-            this.debug && console.warn("strokeDoodle color mapping failed:", err)
-        }
-
-        const w = {
+        } = i, w = {
             color: n,
             weight: s,
             layer: o,
@@ -18492,9 +18453,6 @@ const eE = `<div class="canvasContainer">\r
             <div id="currentColor" class="currentColor"></div>\r
         </button>\r
     </li>\r
-    <li class="pull-right button-pad">\r
-        <input type="color" id="trueColorPicker" value="#000000" style="width: 40px; height: 40px; border: none; cursor: pointer; border-radius: 4px;">\r
-    </li>\r
     <li id="color-palette" class="hide">\r
     </li>\r
 </ul>\r
@@ -18510,8 +18468,7 @@ const eE = `<div class="canvasContainer">\r
         },
         events: {
             "click #currentColorButton": "onPaletteClick",
-            "click #showPaletteButton": "onPaletteClick",
-            "input #trueColorPicker": "onTrueColorChange"
+            "click #showPaletteButton": "onPaletteClick"
         },
         triggers: {
             "click #thicknessButton": "choose:thickness",
@@ -18572,10 +18529,6 @@ const eE = `<div class="canvasContainer">\r
         },
         onChildviewChildviewPaletteSelect(t) {
             this.triggerMethod("choose:color", t), this.showPalette(!1)
-        },
-        onTrueColorChange(t) {
-            const e = t.target.value;
-            this.triggerMethod("choose:color", e)
         }
     });
 class aa {
@@ -19126,45 +19079,11 @@ const uE = `<canvas id="fullLayer" class="sketchpad fullLayer" width='480' heigh
                         action: "line"
                     },
                     i = this.model.get("objectKey");
-                // map any hex color on the single line and on packed lines to palette index
-                try {
-                    const colors = this.model.get("colors") || [];
-                    const toRgb = h => {
-                        const s = (h || "").replace("#", "");
-                        const v = parseInt(s, 16) || 0;
-                        return [(v >> 16) & 255, (v >> 8) & 255, v & 255];
-                    };
-                    const mapHex = hex => {
-                        if (typeof hex !== "string" || hex.charAt(0) !== "#") return hex;
-                        const target = hex.toLowerCase();
-                        let idx = colors.findIndex(c => {
-                            const ch = typeof c === "object" ? c.hex : c;
-                            return ch && ch.toLowerCase() === target;
-                        });
-                        if (idx !== -1) return idx;
-                        const trg = toRgb(target);
-                        let best = 0, bestDist = Infinity;
-                        for (let ii = 0; ii < colors.length; ii++) {
-                            const c = colors[ii];
-                            const ch = typeof c === "object" ? c.hex : c;
-                            if (!ch) continue;
-                            const rgb = toRgb(ch);
-                            const dx = rgb[0] - trg[0], dy = rgb[1] - trg[1], dz = rgb[2] - trg[2];
-                            const dist = dx * dx + dy * dy + dz * dz;
-                            if (dist < bestDist) { bestDist = dist; best = ii; }
-                        }
-                        return best;
-                    };
-                    if (e.line && e.line.color) e.line.color = mapHex(e.line.color);
-                    if (i !== void 0) {
-                        const n = this.sketchpadComponent.getLines();
-                        for (let ii = 0; ii < n.length; ii++) n[ii].color = mapHex(n[ii].color);
-                        e.objectKey = i, e.val = {
-                            lines: n
-                        }
+                if (i !== void 0) {
+                    const n = this.sketchpadComponent.getLines();
+                    e.objectKey = i, e.val = {
+                        lines: n
                     }
-                } catch (err) {
-                    this.model.get("debug") && console.warn("line color mapping failed:", err)
                 }
                 this.triggerMethod("client:message", e)
             }
@@ -19199,39 +19118,26 @@ const uE = `<canvas id="fullLayer" class="sketchpad fullLayer" width='480' heigh
         onChildviewButtonSubmit() {
             const t = this.sketchpadComponent.getLines();
             if (t.length === 0 && !this.model.get("allowEmpty")) return kt.show(Error(this.model.get("strings").drawing_empty)), !1;
-            // map any hex colors in lines to palette indices before sending
-            try {
-                const colors = this.model.get("colors") || [];
-                const toRgb = h => {
-                    const s = (h || "").replace("#", "");
-                    const v = parseInt(s, 16) || 0;
-                    return [(v >> 16) & 255, (v >> 8) & 255, v & 255];
-                };
-                const mapHex = hex => {
-                    if (typeof hex !== "string" || hex.charAt(0) !== "#") return hex;
-                    const target = hex.toLowerCase();
-                    let idx = colors.findIndex(c => {
-                        const ch = typeof c === "object" ? c.hex : c;
-                        return ch && ch.toLowerCase() === target;
-                    });
-                    if (idx !== -1) return idx;
-                    const trg = toRgb(target);
-                    let best = 0, bestDist = Infinity;
-                    for (let ii = 0; ii < colors.length; ii++) {
-                        const c = colors[ii];
-                        const ch = typeof c === "object" ? c.hex : c;
-                        if (!ch) continue;
-                        const rgb = toRgb(ch);
-                        const dx = rgb[0] - trg[0], dy = rgb[1] - trg[1], dz = rgb[2] - trg[2];
-                        const dist = dx * dx + dy * dy + dz * dz;
-                        if (dist < bestDist) { bestDist = dist; best = ii; }
-                    }
-                    return best;
-                };
-                for (let ii = 0; ii < t.length; ii++) t[ii].color = mapHex(t[ii].color);
-            } catch (err) {
-                this.model.get("debug") && console.warn("submit color mapping failed:", err)
+            
+            // Normalize colors and add dummy palette line if needed
+            const palette = this.model.get("colors").map(c => typeof c === "object" ? c.hex : c);
+            let hasPaletteColor = !1;
+            for (let line of t) {
+                if (typeof line.color === "number") {
+                    line.color = palette[line.color] || palette[0];
+                }
+                if (palette.includes(line.color)) {
+                    hasPaletteColor = !0;
+                }
             }
+            if (!hasPaletteColor && t.length > 0) {
+                t.push({
+                    color: palette[this.model.get("defaultIndex") || 0],
+                    thickness: 1,
+                    points: "0,0|0,0"
+                });
+            }
+            
             const e = {
                     lines: t,
                     action: "submit"
@@ -24060,39 +23966,26 @@ const p1 = xt.View.extend({
         onChildviewButtonSubmit() {
             const t = this.sketchpadComponent.getLines();
             if (t.length === 0 && !this.model.get("allowEmpty")) return kt.show(Error(this.model.get("strings").drawing_empty)), !1;
-            // map any hex colors in lines to palette indices before sending
-            try {
-                const colors = this.model.get("colors") || [];
-                const toRgb = h => {
-                    const s = (h || "").replace("#", "");
-                    const v = parseInt(s, 16) || 0;
-                    return [(v >> 16) & 255, (v >> 8) & 255, v & 255];
-                };
-                const mapHex = hex => {
-                    if (typeof hex !== "string" || hex.charAt(0) !== "#") return hex;
-                    const target = hex.toLowerCase();
-                    let idx = colors.findIndex(c => {
-                        const ch = typeof c === "object" ? c.hex : c;
-                        return ch && ch.toLowerCase() === target;
-                    });
-                    if (idx !== -1) return idx;
-                    const trg = toRgb(target);
-                    let best = 0, bestDist = Infinity;
-                    for (let ii = 0; ii < colors.length; ii++) {
-                        const c = colors[ii];
-                        const ch = typeof c === "object" ? c.hex : c;
-                        if (!ch) continue;
-                        const rgb = toRgb(ch);
-                        const dx = rgb[0] - trg[0], dy = rgb[1] - trg[1], dz = rgb[2] - trg[2];
-                        const dist = dx * dx + dy * dy + dz * dz;
-                        if (dist < bestDist) { bestDist = dist; best = ii; }
-                    }
-                    return best;
-                };
-                for (let ii = 0; ii < t.length; ii++) t[ii].color = mapHex(t[ii].color);
-            } catch (err) {
-                this.model.get("debug") && console.warn("submit color mapping failed:", err)
+            
+            // Normalize colors and add dummy palette line if needed
+            const palette = this.model.get("colors").map(c => typeof c === "object" ? c.hex : c);
+            let hasPaletteColor = !1;
+            for (let line of t) {
+                if (typeof line.color === "number") {
+                    line.color = palette[line.color] || palette[0];
+                }
+                if (palette.includes(line.color)) {
+                    hasPaletteColor = !0;
+                }
             }
+            if (!hasPaletteColor && t.length > 0) {
+                t.push({
+                    color: palette[this.model.get("defaultIndex") || 0],
+                    thickness: 1,
+                    points: "0,0|0,0"
+                });
+            }
+            
             const e = {
                 lines: t,
                 action: "submit"
