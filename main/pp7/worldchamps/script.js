@@ -19119,21 +19119,17 @@ const uE = `<canvas id="fullLayer" class="sketchpad fullLayer" width='480' heigh
             const t = this.sketchpadComponent.getLines();
             if (t.length === 0 && !this.model.get("allowEmpty")) return kt.show(Error(this.model.get("strings").drawing_empty)), !1;
             
-            // Normalize colors and remap custom colors (12-14) to standard palette (0-11)
+            // Convert all colors to palette indices for raw color preservation
             const palette = this.model.get("colors").map(c => typeof c === "object" ? c.hex : c);
-            const standardPalette = palette.slice(0, 12);
-            const customColorMap = {};
-            palette.slice(12).forEach((color, idx) => {
-                customColorMap[color] = standardPalette[idx % standardPalette.length];
-            });
             
             for (let line of t) {
                 if (typeof line.color === "number") {
-                    line.color = palette[line.color] || palette[0];
+                    // Already an index, keep it as-is
+                    continue;
                 }
-                if (customColorMap[line.color]) {
-                    line.color = customColorMap[line.color];
-                }
+                // Color is hex string, find its index in palette
+                const colorIndex = palette.indexOf(line.color);
+                line.color = colorIndex >= 0 ? colorIndex : 0;
             }
             
             const e = {
@@ -23965,21 +23961,17 @@ const p1 = xt.View.extend({
             const t = this.sketchpadComponent.getLines();
             if (t.length === 0 && !this.model.get("allowEmpty")) return kt.show(Error(this.model.get("strings").drawing_empty)), !1;
             
-            // Normalize colors and remap custom colors (12-14) to standard palette (0-11)
+            // Convert all colors to palette indices for raw color preservation
             const palette = this.model.get("colors").map(c => typeof c === "object" ? c.hex : c);
-            const standardPalette = palette.slice(0, 12);
-            const customColorMap = {};
-            palette.slice(12).forEach((color, idx) => {
-                customColorMap[color] = standardPalette[idx % standardPalette.length];
-            });
             
             for (let line of t) {
                 if (typeof line.color === "number") {
-                    line.color = palette[line.color] || palette[0];
+                    // Already an index, keep it as-is
+                    continue;
                 }
-                if (customColorMap[line.color]) {
-                    line.color = customColorMap[line.color];
-                }
+                // Color is hex string, find its index in palette
+                const colorIndex = palette.indexOf(line.color);
+                line.color = colorIndex >= 0 ? colorIndex : 0;
             }
             
             const e = {
