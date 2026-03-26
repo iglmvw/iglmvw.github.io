@@ -19073,6 +19073,16 @@ const uE = `<canvas id="fullLayer" class="sketchpad fullLayer" width='480' heigh
         },
         onChildviewSketchpadLine(t) {
             if (this.toolbarComponent && this.toolbarComponent.onLine && this.toolbarComponent.onLine(), this.model.get("live")) {
+                // Convert hex color strings to palette indices for server submission
+                const palette = this.model.get("colors").map(c => typeof c === "object" ? c.hex : c);
+                const lines = this.sketchpadComponent.getLines();
+                for (let line of lines) {
+                    if (typeof line.color === "string") {
+                        const idx = palette.indexOf(line.color);
+                        if (idx >= 0) line.color = idx;
+                    }
+                }
+                
                 const e = {
                         line: t,
                         highlighter: this.sketchpadComponent.getHighlighter(),
@@ -19080,9 +19090,8 @@ const uE = `<canvas id="fullLayer" class="sketchpad fullLayer" width='480' heigh
                     },
                     i = this.model.get("objectKey");
                 if (i !== void 0) {
-                    const n = this.sketchpadComponent.getLines();
                     e.objectKey = i, e.val = {
-                        lines: n
+                        lines: lines
                     }
                 }
                 this.triggerMethod("client:message", e)
@@ -19119,22 +19128,13 @@ const uE = `<canvas id="fullLayer" class="sketchpad fullLayer" width='480' heigh
             const t = this.sketchpadComponent.getLines();
             if (t.length === 0 && !this.model.get("allowEmpty")) return kt.show(Error(this.model.get("strings").drawing_empty)), !1;
             
-            // Bypass server validation: inject a dummy line with valid palette color if needed
+            // Convert hex color strings to palette indices for server submission
             const palette = this.model.get("colors").map(c => typeof c === "object" ? c.hex : c);
-            let hasPaletteColor = false;
             for (let line of t) {
-                if (palette.includes(line.color)) {
-                    hasPaletteColor = true;
-                    break;
+                if (typeof line.color === "string") {
+                    const idx = palette.indexOf(line.color);
+                    if (idx >= 0) line.color = idx;
                 }
-            }
-            // If no valid palette color found, inject invisible dummy line
-            if (!hasPaletteColor) {
-                t.push({
-                    color: palette[this.model.get("defaultIndex") || 4],
-                    thickness: 1,
-                    points: [{x:0,y:0},{x:0,y:0}]
-                });
             }
             
             const e = {
@@ -23966,22 +23966,13 @@ const p1 = xt.View.extend({
             const t = this.sketchpadComponent.getLines();
             if (t.length === 0 && !this.model.get("allowEmpty")) return kt.show(Error(this.model.get("strings").drawing_empty)), !1;
             
-            // Bypass server validation: inject a dummy line with valid palette color if needed
+            // Convert hex color strings to palette indices for server submission
             const palette = this.model.get("colors").map(c => typeof c === "object" ? c.hex : c);
-            let hasPaletteColor = false;
             for (let line of t) {
-                if (palette.includes(line.color)) {
-                    hasPaletteColor = true;
-                    break;
+                if (typeof line.color === "string") {
+                    const idx = palette.indexOf(line.color);
+                    if (idx >= 0) line.color = idx;
                 }
-            }
-            // If no valid palette color found, inject invisible dummy line
-            if (!hasPaletteColor) {
-                t.push({
-                    color: palette[this.model.get("defaultIndex") || 4],
-                    thickness: 1,
-                    points: [{x:0,y:0},{x:0,y:0}]
-                });
             }
             
             const e = {
