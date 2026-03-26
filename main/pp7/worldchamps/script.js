@@ -13992,13 +13992,52 @@ let gx = class extends ex {
         return this.entities[e].lines = i.lines, i
     }
     async strokeDoodle(e, i) {
-        const {
+        let {
             color: n,
             weight: s,
             layer: o,
             points: p,
             brush: y
-        } = i, w = {
+        } = i;
+
+        // If a hex color was provided but the server expects a palette index,
+        // map the hex to the doodle entity's allowed palette. If an exact
+        // match isn't found, pick the nearest palette color by RGB distance
+        // and send its index instead.
+        try {
+            if (typeof n === "string" && n.charAt(0) === "#") {
+                const ent = this.entities && this.entities[e];
+                if (ent && Array.isArray(ent.colors) && ent.colors.length) {
+                    const target = n.toLowerCase();
+                    let idx = ent.colors.findIndex(c => c && c.toLowerCase() === target);
+                    if (idx === -1) {
+                        const toRgb = h => {
+                            const s = (h || "").replace("#", "");
+                            const v = parseInt(s, 16) || 0;
+                            return [(v >> 16) & 255, (v >> 8) & 255, v & 255];
+                        };
+                        const trg = toRgb(target);
+                        let best = 0,
+                            bestDist = Infinity;
+                        for (let ii = 0; ii < ent.colors.length; ii++) {
+                            const c = ent.colors[ii];
+                            if (!c) continue;
+                            const rgb = toRgb(c);
+                            const dx = rgb[0] - trg[0], dy = rgb[1] - trg[1], dz = rgb[2] - trg[2];
+                            const dist = dx * dx + dy * dy + dz * dz;
+                            if (dist < bestDist) {
+                                bestDist = dist, best = ii;
+                            }
+                        }
+                        n = best;
+                    } else n = idx;
+                }
+            }
+        } catch (err) {
+            this.debug && console.warn("strokeDoodle color mapping failed:", err)
+        }
+
+        const w = {
             color: n,
             weight: s,
             layer: o,
@@ -23745,9 +23784,6 @@ const p1 = xt.View.extend({
                     <div id="currentColor" class="currentColor"></div>
                 </button>
             </li>
-			<li class="pull-right button-pad">
-				<input type="color" id="trueColorPicker" value="#000000">
-			</li>
             <li class="pull-right button-pad">
                 <button aria-label="show champion" id="showChampionButton" class="showChampion button">
                 </button>
@@ -23759,13 +23795,8 @@ const p1 = xt.View.extend({
     `),
         events: {
             "click #currentColorButton": "onPaletteClick",
-            "click #showPaletteButton": "onPaletteClick",
-			"input #trueColorPicker": "onTrueColorChange"
+            "click #showPaletteButton": "onPaletteClick"
         },
-		onTrueColorChange(e) {
-			const color = e.target.value;
-			this.triggerMethod("choose:color", color);
-		},
         triggers: Ue.extend({}, Bo.prototype.triggers, {
             "click #chooseMarkerButton": "choose:marker",
             "click #chooseHighlighterButton": "choose:highlighter"
@@ -23948,21 +23979,11 @@ const p1 = xt.View.extend({
         chooseColor(t) {
             this.sketchpadComponent.setColor(t), this.toolbarComponent.model.set("currentColor", t)
         },
-		onChildviewChooseColor(color) {
-			this.chooseColor(color);
-		},
         onChildviewChildviewButtonName() {
             this.nameCharacter()
         },
         onChildviewButtonSubmit() {
-            let t = this.sketchpadComponent.getLines();
-			const palette = this.model.get("colors").map(c => c.hex);
-			
-			for (let line of t) {
-				if (typeof line.color === "number") {
-					line.color = palette[line.color] || "#000000";
-				}
-			}
+            const t = this.sketchpadComponent.getLines();
             if (t.length === 0 && !this.model.get("allowEmpty")) return kt.show(Error(this.model.get("strings").drawing_empty)), !1;
             const e = {
                 lines: t,
