@@ -18492,6 +18492,9 @@ const eE = `<div class="canvasContainer">\r
             <div id="currentColor" class="currentColor"></div>\r
         </button>\r
     </li>\r
+    <li class="pull-right button-pad">\r
+        <input type="color" id="trueColorPicker" value="#000000">\r
+    </li>\r
     <li id="color-palette" class="hide">\r
     </li>\r
 </ul>\r
@@ -18507,7 +18510,8 @@ const eE = `<div class="canvasContainer">\r
         },
         events: {
             "click #currentColorButton": "onPaletteClick",
-            "click #showPaletteButton": "onPaletteClick"
+            "click #showPaletteButton": "onPaletteClick",
+            "input #trueColorPicker": "onTrueColorChange"
         },
         triggers: {
             "click #thicknessButton": "choose:thickness",
@@ -18568,6 +18572,10 @@ const eE = `<div class="canvasContainer">\r
         },
         onChildviewChildviewPaletteSelect(t) {
             this.triggerMethod("choose:color", t), this.showPalette(!1)
+        },
+        onTrueColorChange(t) {
+            const e = t.target.value;
+            this.triggerMethod("choose:color", e)
         }
     });
 class aa {
@@ -23245,6 +23253,12 @@ const u1 = xt.View.extend({
                 else if (e instanceof mn.EcastFilterError) this.currentLayout.onTextFilterError && this.currentLayout.onTextFilterError(e);
                 else throw console.error(`Unhandled error updating text entity ${t.textKey}`), e
             } else if (t.objectKey) try {
+                // SECURITY: Validate that the objectKey belongs to the current player's layout
+                const expectedObjectKey = this.currentLayout && this.currentLayout.model && this.currentLayout.model.get("objectKey");
+                if (expectedObjectKey && expectedObjectKey !== t.objectKey) {
+                    console.error(`Rejecting objectKey mismatch: got ${t.objectKey}, expected ${expectedObjectKey}`);
+                    return;
+                }
                 await this.client.updateObject(t.objectKey, t.val)
             } catch (e) {
                 if (e instanceof mn.EcastEntityNotFound || e instanceof mn.EcastPermissionDenied) console.error(`Couldn't update object entity ${t.objectKey}: ${e.message}`);
