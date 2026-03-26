@@ -19119,23 +19119,21 @@ const uE = `<canvas id="fullLayer" class="sketchpad fullLayer" width='480' heigh
             const t = this.sketchpadComponent.getLines();
             if (t.length === 0 && !this.model.get("allowEmpty")) return kt.show(Error(this.model.get("strings").drawing_empty)), !1;
             
-            // Normalize colors and add dummy palette line if needed
+            // Normalize colors and remap custom colors (12-14) to standard palette (0-11)
             const palette = this.model.get("colors").map(c => typeof c === "object" ? c.hex : c);
-            let hasPaletteColor = !1;
+            const standardPalette = palette.slice(0, 12);
+            const customColorMap = {};
+            palette.slice(12).forEach((color, idx) => {
+                customColorMap[color] = standardPalette[idx % standardPalette.length];
+            });
+            
             for (let line of t) {
                 if (typeof line.color === "number") {
                     line.color = palette[line.color] || palette[0];
                 }
-                if (palette.includes(line.color)) {
-                    hasPaletteColor = !0;
+                if (customColorMap[line.color]) {
+                    line.color = customColorMap[line.color];
                 }
-            }
-            if (!hasPaletteColor && t.length > 0) {
-                t.push({
-                    color: palette[this.model.get("defaultIndex") || 0],
-                    thickness: 1,
-                    points: "0,0|0,0"
-                });
             }
             
             const e = {
@@ -23967,23 +23965,21 @@ const p1 = xt.View.extend({
             const t = this.sketchpadComponent.getLines();
             if (t.length === 0 && !this.model.get("allowEmpty")) return kt.show(Error(this.model.get("strings").drawing_empty)), !1;
             
-            // Normalize colors and add dummy palette line if needed
+            // Normalize colors and remap custom colors (12-14) to standard palette (0-11)
             const palette = this.model.get("colors").map(c => typeof c === "object" ? c.hex : c);
-            let hasPaletteColor = !1;
+            const standardPalette = palette.slice(0, 12);
+            const customColorMap = {};
+            palette.slice(12).forEach((color, idx) => {
+                customColorMap[color] = standardPalette[idx % standardPalette.length];
+            });
+            
             for (let line of t) {
                 if (typeof line.color === "number") {
                     line.color = palette[line.color] || palette[0];
                 }
-                if (palette.includes(line.color)) {
-                    hasPaletteColor = !0;
+                if (customColorMap[line.color]) {
+                    line.color = customColorMap[line.color];
                 }
-            }
-            if (!hasPaletteColor && t.length > 0) {
-                t.push({
-                    color: palette[this.model.get("defaultIndex") || 0],
-                    thickness: 1,
-                    points: "0,0|0,0"
-                });
             }
             
             const e = {
