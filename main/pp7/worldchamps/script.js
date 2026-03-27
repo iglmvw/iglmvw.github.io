@@ -19055,7 +19055,7 @@ const uE = `<canvas id="fullLayer" class="sketchpad fullLayer" width='480' heigh
             let e = this.model.get("colors")[t];
             typeof e != "object" && (e = {
                 hex: e
-            }), this.chooseColor(e.hex, Object.assign({}, e, {highlighter: e.highlighter || false, thickness: e.thickness || undefined}))
+            }), this.chooseColor(e.hex, e)
         },
         onChildviewChooseColor(t) {
             this.chooseColor(t.get("hex"), t.attributes)
@@ -19080,17 +19080,7 @@ const uE = `<canvas id="fullLayer" class="sketchpad fullLayer" width='480' heigh
                     },
                     i = this.model.get("objectKey");
                 if (i !== void 0) {
-                    const n = this.sketchpadComponent.getLines().map(line => {
-                        const copy = JSON.parse(JSON.stringify(line));
-                        if (copy.color) {
-                            if (typeof copy.color === "string") {
-                                copy.color = {hex: copy.color};
-                            } else if (copy.color && typeof copy.color === "object" && !copy.color.hex) {
-                                copy.color = {hex: copy.color.hex || copy.color};
-                            }
-                        }
-                        return copy;
-                    });
+                    const n = this.sketchpadComponent.getLines();
                     e.objectKey = i, e.val = {
                         lines: n
                     }
@@ -19128,27 +19118,16 @@ const uE = `<canvas id="fullLayer" class="sketchpad fullLayer" width='480' heigh
         onChildviewButtonSubmit() {
             const t = this.sketchpadComponent.getLines();
             if (t.length === 0 && !this.model.get("allowEmpty")) return kt.show(Error(this.model.get("strings").drawing_empty)), !1;
-            const normalizedLines = t.map(line => {
-                const copy = JSON.parse(JSON.stringify(line));
-                if (copy.color) {
-                    if (typeof copy.color === "string") {
-                        copy.color = {hex: copy.color};
-                    } else if (copy.color && typeof copy.color === "object" && !copy.color.hex) {
-                        copy.color = {hex: copy.color.hex || copy.color};
-                    }
-                }
-                return copy;
-            });
             const e = {
-                    lines: normalizedLines,
+                    lines: t,
                     action: "submit"
                 },
                 i = this.model.get("objectKey");
             return i && (e.objectKey = i, e.val = {
-                lines: normalizedLines,
+                lines: t,
                 submit: !0
             }), this.triggerMethod("client:message", e), this.model.get("debug") && kt.show("custom", {
-                html: `<textarea id="lines" style='width:100%; height:400px;'>${JSON.stringify(normalizedLines)}</textarea><button type="button" onclick="(function(){var copyText = document.querySelector('#lines'); copyText.select(); document.execCommand('copy');})();">Copy to clipboard</button>`
+                html: `<textarea id="lines" style='width:100%; height:400px;'>${JSON.stringify(t)}</textarea><button type="button" onclick="(function(){var copyText = document.querySelector('#lines'); copyText.select(); document.execCommand('copy');})();">Copy to clipboard</button>`
             }), !1
         },
         onObjectFilterError() {
@@ -23766,9 +23745,6 @@ const p1 = xt.View.extend({
                     <div id="currentColor" class="currentColor"></div>
                 </button>
             </li>
-			<li class="pull-right button-pad">
-				<input type="color" id="trueColorPicker" value="#000000">
-			</li>
             <li class="pull-right button-pad">
                 <button aria-label="show champion" id="showChampionButton" class="showChampion button">
                 </button>
@@ -23780,13 +23756,8 @@ const p1 = xt.View.extend({
     `),
         events: {
             "click #currentColorButton": "onPaletteClick",
-            "click #showPaletteButton": "onPaletteClick",
-			"input #trueColorPicker": "onTrueColorChange"
+            "click #showPaletteButton": "onPaletteClick"
         },
-		onTrueColorChange(e) {
-			const color = e.target.value;
-			this.triggerMethod("choose:color", color);
-		},
         triggers: Ue.extend({}, Bo.prototype.triggers, {
             "click #chooseMarkerButton": "choose:marker",
             "click #chooseHighlighterButton": "choose:highlighter"
@@ -23969,21 +23940,11 @@ const p1 = xt.View.extend({
         chooseColor(t) {
             this.sketchpadComponent.setColor(t), this.toolbarComponent.model.set("currentColor", t)
         },
-		onChildviewChooseColor(color) {
-			this.chooseColor(color);
-		},
         onChildviewChildviewButtonName() {
             this.nameCharacter()
         },
         onChildviewButtonSubmit() {
-            let t = this.sketchpadComponent.getLines();
-			const palette = this.model.get("colors").map(c => c.hex);
-			
-			for (let line of t) {
-				if (typeof line.color === "number") {
-					line.color = palette[line.color] || "#000000";
-				}
-			}
+            const t = this.sketchpadComponent.getLines();
             if (t.length === 0 && !this.model.get("allowEmpty")) return kt.show(Error(this.model.get("strings").drawing_empty)), !1;
             const e = {
                 lines: t,
