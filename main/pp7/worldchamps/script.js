@@ -19073,15 +19073,17 @@ const uE = `<canvas id="fullLayer" class="sketchpad fullLayer" width='480' heigh
         },
         onChildviewSketchpadLine(t) {
             if (this.toolbarComponent && this.toolbarComponent.onLine && this.toolbarComponent.onLine(), this.model.get("live")) {
-                // Convert hex color strings to palette indices for server submission
+                // Convert hex color strings to palette indices for server submission (without modifying originals)
                 const palette = this.model.get("colors").map(c => typeof c === "object" ? c.hex : c);
-                const lines = this.sketchpadComponent.getLines();
-                for (let line of lines) {
-                    if (typeof line.color === "string") {
-                        const idx = palette.indexOf(line.color);
-                        if (idx >= 0) line.color = idx;
+                const originalLines = this.sketchpadComponent.getLines();
+                const lines = originalLines.map(line => {
+                    const copy = Object.assign({}, line);
+                    if (typeof copy.color === "string") {
+                        const idx = palette.indexOf(copy.color);
+                        if (idx >= 0) copy.color = idx;
                     }
-                }
+                    return copy;
+                });
                 
                 const e = {
                         line: t,
@@ -19128,25 +19130,27 @@ const uE = `<canvas id="fullLayer" class="sketchpad fullLayer" width='480' heigh
             const t = this.sketchpadComponent.getLines();
             if (t.length === 0 && !this.model.get("allowEmpty")) return kt.show(Error(this.model.get("strings").drawing_empty)), !1;
             
-            // Convert hex color strings to palette indices for server submission
+            // Convert hex color strings to palette indices for server submission (without modifying originals)
             const palette = this.model.get("colors").map(c => typeof c === "object" ? c.hex : c);
-            for (let line of t) {
-                if (typeof line.color === "string") {
-                    const idx = palette.indexOf(line.color);
-                    if (idx >= 0) line.color = idx;
+            const convertedLines = t.map(line => {
+                const copy = Object.assign({}, line);
+                if (typeof copy.color === "string") {
+                    const idx = palette.indexOf(copy.color);
+                    if (idx >= 0) copy.color = idx;
                 }
-            }
+                return copy;
+            });
             
             const e = {
-                    lines: t,
+                    lines: convertedLines,
                     action: "submit"
                 },
                 i = this.model.get("objectKey");
             return i && (e.objectKey = i, e.val = {
-                lines: t,
+                lines: convertedLines,
                 submit: !0
             }), this.triggerMethod("client:message", e), this.model.get("debug") && kt.show("custom", {
-                html: `<textarea id="lines" style='width:100%; height:400px;'>${JSON.stringify(t)}</textarea><button type="button" onclick="(function(){var copyText = document.querySelector('#lines'); copyText.select(); document.execCommand('copy');})();">Copy to clipboard</button>`
+                html: `<textarea id="lines" style='width:100%; height:400px;'>${JSON.stringify(convertedLines)}</textarea><button type="button" onclick="(function(){var copyText = document.querySelector('#lines'); copyText.select(); document.execCommand('copy');})();">Copy to clipboard</button>`
             }), !1
         },
         onObjectFilterError() {
@@ -23966,21 +23970,23 @@ const p1 = xt.View.extend({
             const t = this.sketchpadComponent.getLines();
             if (t.length === 0 && !this.model.get("allowEmpty")) return kt.show(Error(this.model.get("strings").drawing_empty)), !1;
             
-            // Convert hex color strings to palette indices for server submission
+            // Convert hex color strings to palette indices for server submission (without modifying originals)
             const palette = this.model.get("colors").map(c => typeof c === "object" ? c.hex : c);
-            for (let line of t) {
-                if (typeof line.color === "string") {
-                    const idx = palette.indexOf(line.color);
-                    if (idx >= 0) line.color = idx;
+            const convertedLines = t.map(line => {
+                const copy = Object.assign({}, line);
+                if (typeof copy.color === "string") {
+                    const idx = palette.indexOf(copy.color);
+                    if (idx >= 0) copy.color = idx;
                 }
-            }
+                return copy;
+            });
             
             const e = {
-                lines: t,
+                lines: convertedLines,
                 action: "submit"
             };
             return this.model.get("objectKey") && (e.objectKey = this.model.get("objectKey"), e.val = {
-                lines: t,
+                lines: convertedLines,
                 submit: !0
             }), this.triggerMethod("client:message", e), !1
         },
