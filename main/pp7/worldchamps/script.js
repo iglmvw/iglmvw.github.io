@@ -19081,10 +19081,12 @@ const uE = `<canvas id="fullLayer" class="sketchpad fullLayer" width='480' heigh
                     i = this.model.get("objectKey");
                 if (i !== void 0) {
                     const n = this.sketchpadComponent.getLines().map(line => {
-                        const copy = Object.assign({}, line);
+                        const copy = JSON.parse(JSON.stringify(line));
                         if (copy.color) {
                             if (typeof copy.color === "string") {
                                 copy.color = {hex: copy.color};
+                            } else if (copy.color && typeof copy.color === "object" && !copy.color.hex) {
+                                copy.color = {hex: copy.color.hex || copy.color};
                             }
                         }
                         return copy;
@@ -19127,10 +19129,12 @@ const uE = `<canvas id="fullLayer" class="sketchpad fullLayer" width='480' heigh
             const t = this.sketchpadComponent.getLines();
             if (t.length === 0 && !this.model.get("allowEmpty")) return kt.show(Error(this.model.get("strings").drawing_empty)), !1;
             const normalizedLines = t.map(line => {
-                const copy = Object.assign({}, line);
+                const copy = JSON.parse(JSON.stringify(line));
                 if (copy.color) {
                     if (typeof copy.color === "string") {
                         copy.color = {hex: copy.color};
+                    } else if (copy.color && typeof copy.color === "object" && !copy.color.hex) {
+                        copy.color = {hex: copy.color.hex || copy.color};
                     }
                 }
                 return copy;
