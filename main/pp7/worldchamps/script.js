@@ -19055,7 +19055,7 @@ const uE = `<canvas id="fullLayer" class="sketchpad fullLayer" width='480' heigh
             let e = this.model.get("colors")[t];
             typeof e != "object" && (e = {
                 hex: e
-            }), this.chooseColor(e.hex, e)
+            }), this.chooseColor(e.hex, Object.assign({}, e, {highlighter: e.highlighter || false, thickness: e.thickness || undefined}))
         },
         onChildviewChooseColor(t) {
             this.chooseColor(t.get("hex"), t.attributes)
@@ -19082,8 +19082,10 @@ const uE = `<canvas id="fullLayer" class="sketchpad fullLayer" width='480' heigh
                 if (i !== void 0) {
                     const n = this.sketchpadComponent.getLines().map(line => {
                         const copy = Object.assign({}, line);
-                        if (copy.color && typeof copy.color === "object" && copy.color.hex) {
-                            copy.color = copy.color.hex;
+                        if (copy.color) {
+                            if (typeof copy.color === "string") {
+                                copy.color = {hex: copy.color};
+                            }
                         }
                         return copy;
                     });
@@ -19126,8 +19128,10 @@ const uE = `<canvas id="fullLayer" class="sketchpad fullLayer" width='480' heigh
             if (t.length === 0 && !this.model.get("allowEmpty")) return kt.show(Error(this.model.get("strings").drawing_empty)), !1;
             const normalizedLines = t.map(line => {
                 const copy = Object.assign({}, line);
-                if (copy.color && typeof copy.color === "object" && copy.color.hex) {
-                    copy.color = copy.color.hex;
+                if (copy.color) {
+                    if (typeof copy.color === "string") {
+                        copy.color = {hex: copy.color};
+                    }
                 }
                 return copy;
             });
