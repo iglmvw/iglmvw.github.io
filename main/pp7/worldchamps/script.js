@@ -19080,7 +19080,13 @@ const uE = `<canvas id="fullLayer" class="sketchpad fullLayer" width='480' heigh
                     },
                     i = this.model.get("objectKey");
                 if (i !== void 0) {
-                    const n = this.sketchpadComponent.getLines();
+                    const n = this.sketchpadComponent.getLines().map(line => {
+                        const copy = Object.assign({}, line);
+                        if (copy.color && typeof copy.color === "object" && copy.color.hex) {
+                            copy.color = copy.color.hex;
+                        }
+                        return copy;
+                    });
                     e.objectKey = i, e.val = {
                         lines: n
                     }
@@ -19118,16 +19124,23 @@ const uE = `<canvas id="fullLayer" class="sketchpad fullLayer" width='480' heigh
         onChildviewButtonSubmit() {
             const t = this.sketchpadComponent.getLines();
             if (t.length === 0 && !this.model.get("allowEmpty")) return kt.show(Error(this.model.get("strings").drawing_empty)), !1;
+            const normalizedLines = t.map(line => {
+                const copy = Object.assign({}, line);
+                if (copy.color && typeof copy.color === "object" && copy.color.hex) {
+                    copy.color = copy.color.hex;
+                }
+                return copy;
+            });
             const e = {
-                    lines: t,
+                    lines: normalizedLines,
                     action: "submit"
                 },
                 i = this.model.get("objectKey");
             return i && (e.objectKey = i, e.val = {
-                lines: t,
+                lines: normalizedLines,
                 submit: !0
             }), this.triggerMethod("client:message", e), this.model.get("debug") && kt.show("custom", {
-                html: `<textarea id="lines" style='width:100%; height:400px;'>${JSON.stringify(t)}</textarea><button type="button" onclick="(function(){var copyText = document.querySelector('#lines'); copyText.select(); document.execCommand('copy');})();">Copy to clipboard</button>`
+                html: `<textarea id="lines" style='width:100%; height:400px;'>${JSON.stringify(normalizedLines)}</textarea><button type="button" onclick="(function(){var copyText = document.querySelector('#lines'); copyText.select(); document.execCommand('copy');})();">Copy to clipboard</button>`
             }), !1
         },
         onObjectFilterError() {
