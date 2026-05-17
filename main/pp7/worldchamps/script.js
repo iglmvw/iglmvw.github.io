@@ -23745,6 +23745,9 @@ const p1 = xt.View.extend({
                     <div id="currentColor" class="currentColor"></div>
                 </button>
             </li>
+			<li class="pull-right button-pad">
+				<input type="color" id="trueColorPicker" value="#000000">
+			</li>
             <li class="pull-right button-pad">
                 <button aria-label="show champion" id="showChampionButton" class="showChampion button">
                 </button>
@@ -23756,8 +23759,13 @@ const p1 = xt.View.extend({
     `),
         events: {
             "click #currentColorButton": "onPaletteClick",
-            "click #showPaletteButton": "onPaletteClick"
+            "click #showPaletteButton": "onPaletteClick",
+			"input #trueColorPicker": "onTrueColorChange"
         },
+		onTrueColorChange(e) {
+			const color = e.target.value;
+			this.triggerMethod("choose:color", color);
+		},
         triggers: Ue.extend({}, Bo.prototype.triggers, {
             "click #chooseMarkerButton": "choose:marker",
             "click #chooseHighlighterButton": "choose:highlighter"
@@ -23809,8 +23817,9 @@ const p1 = xt.View.extend({
     y1 = Qi.extend({
         model: new m1,
         events: Ue.extend({}, Qi.prototype.events, {
-            "click #showChampionButton": "onShowChampion"
-        }),
+			"click #showChampionButton": "onShowChampion",
+			"childview:choose:color": "onChildviewChooseColor"
+		}),
         bindings: Ue.extend({}, Qi.prototype.bindings, {
             "#showChampionButton": {
                 observe: "champion",
@@ -23940,11 +23949,21 @@ const p1 = xt.View.extend({
         chooseColor(t) {
             this.sketchpadComponent.setColor(t), this.toolbarComponent.model.set("currentColor", t)
         },
+		onChildviewChooseColor(childView, color) {
+			this.chooseColor(color);
+		},
         onChildviewChildviewButtonName() {
             this.nameCharacter()
         },
         onChildviewButtonSubmit() {
-            const t = this.sketchpadComponent.getLines();
+            let t = this.sketchpadComponent.getLines();
+			const palette = this.model.get("colors").map(c => c.hex);
+			
+			for (let line of t) {
+				if (typeof line.color === "number") {
+					line.color = palette[line.color] || "#000000";
+				}
+			}
             if (t.length === 0 && !this.model.get("allowEmpty")) return kt.show(Error(this.model.get("strings").drawing_empty)), !1;
             const e = {
                 lines: t,
