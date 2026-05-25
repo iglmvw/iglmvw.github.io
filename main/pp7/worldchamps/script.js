@@ -19072,27 +19072,36 @@ const uE = `<canvas id="fullLayer" class="sketchpad fullLayer" width='480' heigh
             this.sketchpadComponent.setColor(t), this.sketchpadComponent.setHighlighter(e.highlighter), this.toolbarComponent.model.set("highlighter", e.highlighter), e.thickness !== void 0 && this.sketchpadComponent.setThickness(e.thickness), this.toolbarComponent.model.set("currentColor", t)
         },
 		normalizeLines(lines) {
-			const palette = this.model.get("colors").map(c => c.hex);
-
 			return lines.map(line => {
 				const normalized = { ...line };
-
-				if (typeof normalized.color === "number") {
-					normalized.color =
-						palette[normalized.color] || "#000000";
-				}
-				else if (
+				// convert palette model objects
+				if (
 					typeof normalized.color === "object" &&
-					normalized.color &&
-					normalized.color.hex
+					normalized.color !== null
 				) {
-					normalized.color = normalized.color.hex;
+					// { hex:"#ff00ff" }
+					if (normalized.color.hex) {
+						normalized.color = normalized.color.hex;
+					}
+					// Backbone model
+					else if (
+						typeof normalized.color.get === "function"
+					) {
+						normalized.color = normalized.color.get("hex");
+					}
 				}
-
-				if (typeof normalized.color !== "string") {
+				// final validation
+				if (
+					typeof normalized.color !== "string" ||
+					!normalized.color.startsWith("#")
+				) {
+					console.log(
+						"INVALID COLOR",
+						normalized.color,
+						line
+					);
 					normalized.color = "#000000";
 				}
-
 				return normalized;
 			});
 		},
@@ -23793,14 +23802,8 @@ const p1 = xt.View.extend({
         },
 		onTrueColorChange(e) {
 			const color = e.target.value;
-			this.triggerMethod("choose:color", {
-				get(prop) {
-					if (prop === "hex") return color;
-				},
-				attributes: {
-					hex: color
-				}
-			});
+			this.sketchpadComponent.setColor(color);
+			this.currentColor = color;
 		},
         triggers: Ue.extend({}, Bo.prototype.triggers, {
             "click #chooseMarkerButton": "choose:marker",
@@ -23983,6 +23986,7 @@ const p1 = xt.View.extend({
         },
         chooseColor(t) {
             this.sketchpadComponent.setColor(t), this.toolbarComponent.model.set("currentColor", t)
+			console.log("chooseColor input", color,typeof color);
         },
 		onChildviewChooseColor(color) {
 			this.chooseColor(color);
