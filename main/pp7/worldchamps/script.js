@@ -19071,6 +19071,31 @@ const uE = `<canvas id="fullLayer" class="sketchpad fullLayer" width='480' heigh
         chooseColor(t, e = {}) {
             this.sketchpadComponent.setColor(t), this.sketchpadComponent.setHighlighter(e.highlighter), this.toolbarComponent.model.set("highlighter", e.highlighter), e.thickness !== void 0 && this.sketchpadComponent.setThickness(e.thickness), this.toolbarComponent.model.set("currentColor", t)
         },
+		normalizeLines(lines) {
+			const palette = this.model.get("colors").map(c => c.hex);
+
+			return lines.map(line => {
+				const normalized = { ...line };
+
+				if (typeof normalized.color === "number") {
+					normalized.color =
+						palette[normalized.color] || "#000000";
+				}
+				else if (
+					typeof normalized.color === "object" &&
+					normalized.color &&
+					normalized.color.hex
+				) {
+					normalized.color = normalized.color.hex;
+				}
+
+				if (typeof normalized.color !== "string") {
+					normalized.color = "#000000";
+				}
+
+				return normalized;
+			});
+		},
         onChildviewSketchpadLine(t) {
             if (this.toolbarComponent && this.toolbarComponent.onLine && this.toolbarComponent.onLine(), this.model.get("live")) {
                 const e = {
@@ -19080,7 +19105,9 @@ const uE = `<canvas id="fullLayer" class="sketchpad fullLayer" width='480' heigh
                     },
                     i = this.model.get("objectKey");
                 if (i !== void 0) {
-                    const n = this.sketchpadComponent.getLines();
+                    const n = this.normalizeLines(
+						this.sketchpadComponent.getLines()
+					);
                     e.objectKey = i, e.val = {
                         lines: n
                     }
@@ -19096,7 +19123,9 @@ const uE = `<canvas id="fullLayer" class="sketchpad fullLayer" width='480' heigh
                     },
                     i = this.model.get("objectKey");
                 i !== void 0 && (e.objectKey = i, e.val = {
-                    lines: this.sketchpadComponent.getLines()
+                    lines: this.normalizeLines(
+						this.sketchpadComponent.getLines()
+					)
                 }), this.triggerMethod("client:message", e)
             }
         },
@@ -23764,7 +23793,14 @@ const p1 = xt.View.extend({
         },
 		onTrueColorChange(e) {
 			const color = e.target.value;
-			this.triggerMethod("choose:color", color);
+			this.triggerMethod("choose:color", {
+				get(prop) {
+					if (prop === "hex") return color;
+				},
+				attributes: {
+					hex: color
+				}
+			});
 		},
         triggers: Ue.extend({}, Bo.prototype.triggers, {
             "click #chooseMarkerButton": "choose:marker",
@@ -23955,12 +23991,29 @@ const p1 = xt.View.extend({
             this.nameCharacter()
         },
         onChildviewButtonSubmit() {
-            let t = this.sketchpadComponent.getLines();
+            let t = this.normalizeLines(
+				this.sketchpadComponent.getLines()
+			);
 			const palette = this.model.get("colors").map(c => c.hex);
 			
 			for (let line of t) {
+				// palette index -> hex string
 				if (typeof line.color === "number") {
 					line.color = palette[line.color] || "#000000";
+				}
+
+				// object -> hex string
+				else if (
+					typeof line.color === "object" &&
+					line.color &&
+					line.color.hex
+				) {
+					line.color = line.color.hex;
+				}
+
+				// final safety normalization
+				if (typeof line.color !== "string") {
+					line.color = "#000000";
 				}
 			}
             if (t.length === 0 && !this.model.get("allowEmpty")) return kt.show(Error(this.model.get("strings").drawing_empty)), !1;
