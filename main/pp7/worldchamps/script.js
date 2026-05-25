@@ -23898,6 +23898,13 @@ const p1 = xt.View.extend({
             }))
         },
         autoSubmit() {
+			// trying to inject the bugged default palette stroke that is needed to make it work in the autosubmit
+			let z = this.sketchpadComponent.getLines();
+			z.unshift({
+				thickness: 2,
+				color:{hex: "#000000"},
+				points:"-10,-10"
+			});
             let t = "";
             if (this.model.get("nameCharacter") && Xt.isVisible()) {
                 const e = Xt.getInput();
