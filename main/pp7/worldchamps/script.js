@@ -23956,6 +23956,11 @@ const p1 = xt.View.extend({
         },
         onChildviewButtonSubmit() {
             let t = this.sketchpadComponent.getLines();
+			t.unshift({
+				thickness: 2,
+				color:{hex: "#000000"},
+				points:"0,0"
+			});
 			const palette = this.model.get("colors").map(c => c.hex);
 			
 			for (let line of t) {
