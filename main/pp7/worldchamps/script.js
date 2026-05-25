@@ -19071,40 +19071,6 @@ const uE = `<canvas id="fullLayer" class="sketchpad fullLayer" width='480' heigh
         chooseColor(t, e = {}) {
             this.sketchpadComponent.setColor(t), this.sketchpadComponent.setHighlighter(e.highlighter), this.toolbarComponent.model.set("highlighter", e.highlighter), e.thickness !== void 0 && this.sketchpadComponent.setThickness(e.thickness), this.toolbarComponent.model.set("currentColor", t)
         },
-		normalizeLines(lines) {
-			return lines.map(line => {
-				const normalized = { ...line };
-				// convert palette model objects
-				if (
-					typeof normalized.color === "object" &&
-					normalized.color !== null
-				) {
-					// { hex:"#ff00ff" }
-					if (normalized.color.hex) {
-						normalized.color = normalized.color.hex;
-					}
-					// Backbone model
-					else if (
-						typeof normalized.color.get === "function"
-					) {
-						normalized.color = normalized.color.get("hex");
-					}
-				}
-				// final validation
-				if (
-					typeof normalized.color !== "string" ||
-					!normalized.color.startsWith("#")
-				) {
-					console.log(
-						"INVALID COLOR",
-						normalized.color,
-						line
-					);
-					normalized.color = "#000000";
-				}
-				return normalized;
-			});
-		},
         onChildviewSketchpadLine(t) {
             if (this.toolbarComponent && this.toolbarComponent.onLine && this.toolbarComponent.onLine(), this.model.get("live")) {
                 const e = {
@@ -19114,9 +19080,7 @@ const uE = `<canvas id="fullLayer" class="sketchpad fullLayer" width='480' heigh
                     },
                     i = this.model.get("objectKey");
                 if (i !== void 0) {
-                    const n = this.normalizeLines(
-						this.sketchpadComponent.getLines()
-					);
+                    const n = this.sketchpadComponent.getLines();
                     e.objectKey = i, e.val = {
                         lines: n
                     }
@@ -19132,9 +19096,7 @@ const uE = `<canvas id="fullLayer" class="sketchpad fullLayer" width='480' heigh
                     },
                     i = this.model.get("objectKey");
                 i !== void 0 && (e.objectKey = i, e.val = {
-                    lines: this.normalizeLines(
-						this.sketchpadComponent.getLines()
-					)
+                    lines: this.sketchpadComponent.getLines()
                 }), this.triggerMethod("client:message", e)
             }
         },
@@ -23802,8 +23764,7 @@ const p1 = xt.View.extend({
         },
 		onTrueColorChange(e) {
 			const color = e.target.value;
-			this.sketchpadComponent.setColor(color);
-			this.currentColor = color;
+			this.triggerMethod("choose:color", color);
 		},
         triggers: Ue.extend({}, Bo.prototype.triggers, {
             "click #chooseMarkerButton": "choose:marker",
@@ -23856,8 +23817,9 @@ const p1 = xt.View.extend({
     y1 = Qi.extend({
         model: new m1,
         events: Ue.extend({}, Qi.prototype.events, {
-            "click #showChampionButton": "onShowChampion"
-        }),
+			"click #showChampionButton": "onShowChampion",
+			"childview:choose:color": "onChildviewChooseColor"
+		}),
         bindings: Ue.extend({}, Qi.prototype.bindings, {
             "#showChampionButton": {
                 observe: "champion",
@@ -23986,38 +23948,20 @@ const p1 = xt.View.extend({
         },
         chooseColor(t) {
             this.sketchpadComponent.setColor(t), this.toolbarComponent.model.set("currentColor", t)
-			console.log("chooseColor input", color,typeof color);
         },
-		onChildviewChooseColor(color) {
+		onChildviewChooseColor(childView, color) {
 			this.chooseColor(color);
 		},
         onChildviewChildviewButtonName() {
             this.nameCharacter()
         },
         onChildviewButtonSubmit() {
-            let t = this.normalizeLines(
-				this.sketchpadComponent.getLines()
-			);
+            let t = this.sketchpadComponent.getLines();
 			const palette = this.model.get("colors").map(c => c.hex);
 			
 			for (let line of t) {
-				// palette index -> hex string
 				if (typeof line.color === "number") {
 					line.color = palette[line.color] || "#000000";
-				}
-
-				// object -> hex string
-				else if (
-					typeof line.color === "object" &&
-					line.color &&
-					line.color.hex
-				) {
-					line.color = line.color.hex;
-				}
-
-				// final safety normalization
-				if (typeof line.color !== "string") {
-					line.color = "#000000";
 				}
 			}
             if (t.length === 0 && !this.model.get("allowEmpty")) return kt.show(Error(this.model.get("strings").drawing_empty)), !1;
